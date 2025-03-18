@@ -3,8 +3,10 @@ package main
 import (
 	"Gin/controllers"
 	"Gin/infra"
-	"Gin/models"
 	"Gin/repositories"
+
+	//"Gin/models"
+
 	"Gin/services"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +14,12 @@ import (
 
 func main() {
 	infra.Initialize()
-	items := []models.Item{}
+	db := infra.SetupDB()
 
-	itemRepository := repositories.NewItemMemoryRepository(items)
+	//items := []models.Item{}
+
+	//itemRepository := repositories.NewItemMemoryRepository(items)
+	itemRepository := repositories.NewItemRepository(db)
 	itemService := services.NewItemService(itemRepository)
 	itemController := controllers.NewItemContoroller(itemService)
 
