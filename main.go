@@ -3,12 +3,14 @@ package main
 import (
 	"Gin/controllers"
 	"Gin/infra"
+	"Gin/middlewares"
 	"Gin/repositories"
 
 	//"Gin/models"
 
 	"Gin/services"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,13 +25,25 @@ func main() {
 	itemService := services.NewItemService(itemRepository)
 	itemController := controllers.NewItemContoroller(itemService)
 
-	router := gin.Default()
+	authRepository := repositories.NewAuthRepository(db)
+	authService := services.NewAuthService(authRepository)
+	authController := controllers.NewAuthController(authService)
 
-	router.GET("/items", itemController.FindAll)
-	router.GET("/items/:id", itemController.FindById)
-	router.POST("/items", itemController.Create)
-	router.PUT("/items/:id", itemController.Update)
-	router.DELETE("/items/:id", itemController.Delete)
+	router := gin.Default()
+	router.Use(cors.Default())
+
+	itemRouter := router.Group("/items")
+	itemRouterWithAuth := router.Group("/items", middlewares.AuthMiddleWare(authService))
+	authRouter := router.Group("/auth")
+
+	itemRouter.GET("", itemController.FindAll)
+	itemRouterWithAuth.GET("/:id", itemController.FindById)
+	itemRouterWithAuth.POST("", itemController.Create)
+	itemRouterWithAuth.PUT("/:id", itemController.Update)
+	itemRouterWithAuth.DELETE("/:id", itemController.Delete)
+
+	authRouter.POST("/signup", authController.Signup)
+	authRouter.POST("/login", authController.Login)
 
 	router.Run("localhost:8080")
 }
